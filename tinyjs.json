@@ -1,0 +1,15 @@
+{
+  "name": "procedural-pet",
+  "title": "Procedural Pet",
+  "id": "app.desktop.procedural.pet",
+  "version": "1.0.0",
+  "size": "200x200",
+  "backend": "src/main.js",
+  "contextMenu": false,
+  "chrome": {
+    "frame": false,
+    "windowControls": false,
+    "transparent": true,
+    "acceptsFirstMouse": true
+  }
+}

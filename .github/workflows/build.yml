@@ -1,0 +1,57 @@
+name: Build
+
+# Builds the macOS .app and the Windows .exe on every push to main, on pull
+# requests, and on demand. tinyjs can only build for the OS it runs on, so
+# each platform gets its own runner.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  TINYJS_VERSION: v0.41.0
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tinyjs
+        run: |
+          curl -fsSL https://tinyjs.app/install | sh
+          echo "$HOME/.tinyjs" >> "$GITHUB_PATH"
+
+      - name: Build universal app (Apple Silicon + Intel)
+        run: tinyjs build --universal
+
+      # Zip with ditto so the .app bundle's symlinks and code signature survive
+      - name: Package
+        run: ditto -c -k --keepParent dist/*.app ProceduralPet-macos.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ProceduralPet-macos
+          path: ProceduralPet-macos.zip
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tinyjs
+        shell: pwsh
+        run: |
+          irm https://tinyjs.app/install.ps1 | iex
+          "$env:LOCALAPPDATA\tinyjs" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
+      - name: Build
+        shell: pwsh
+        run: tinyjs build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ProceduralPet-windows
+          path: dist/

@@ -1,0 +1,13 @@
+# tinyjs
+.build/
+dist/
+
+# Dependencies
+node_modules/
+
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/

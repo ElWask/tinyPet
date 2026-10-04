@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Procedural Pet</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent !important;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+    }
+
+    canvas {
+      width: 200px;
+      height: 200px;
+      background: transparent !important;
+      cursor: grab;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="petCanvas" width="200" height="200"></canvas>
+
+  <script>
+    const canvas = document.getElementById('petCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Render at native Retina resolution while keeping a 200x200 logical space.
+    const SIZE = 200;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = SIZE * dpr;
+    canvas.height = SIZE * dpr;
+    ctx.scale(dpr, dpr);
+
+    // Blob parameters
+    const baseRadius = 45;
+    const x = SIZE / 2;
+    const groundY = 168;            // the blob sits on this line; squash keeps its bottom planted
+    const faceY = groundY - baseRadius;
+    let time = 0;
+
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+    // Damped spring: pulls `value` toward `target` with stiffness k and damping c.
+    function spring(stiffness, damping) {
+      return { value: 0, velocity: 0, target: 0, stiffness, damping };
+    }
+    function stepSpring(s, dt) {
+      const force = (s.target - s.value) * s.stiffness - s.velocity * s.damping;
+      s.velocity += force * dt;
+      s.value += s.velocity * dt;
+    }
+
+    // Gaze in radians (yaw = left/right, pitch = up/down), slightly underdamped
+    const lookX = spring(120, 12);
+    const lookY = spring(120, 12);
+    // Body wobble, kicked when the cursor moves quickly
+    const wobbleX = spring(180, 6);
+    const wobbleY = spring(180, 6);
+    // Squash: >0 flattens, <0 stretches. Low damping = bouncy jelly.
+    const squash = spring(260, 7);
+    // Melt: 0 = solid, 1 = puddle. Soft and slow, like goo.
+    const melt = spring(28, 8);
+
+    function logState(message) {
+      if (window.tiny) tiny.api.call('logState', { message }).catch(() => {});
+    }
+
+    // ---------- Cursor tracking ----------
+
+    let lastMouse = null;
+
+    // Point the gaze at a cursor position given in window (client) coordinates
+    function lookAt(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = clientX - rect.left - x;
+      const mouseY = clientY - rect.top - faceY;
+
+      // Treat the cursor as sitting on a plane 140px in front of the face, so the
+      // angle saturates naturally for far-away cursors
+      lookX.target = clamp(Math.atan2(mouseX, 140), -0.9, 0.9);
+      lookY.target = clamp(Math.atan2(mouseY, 140), -0.8, 0.8);
+
+      // Fast cursor movement jiggles the body
+      if (lastMouse) {
+        const dx = clientX - lastMouse.x;
+        const dy = clientY - lastMouse.y;
+        // Ignore huge jumps (e.g. the cursor teleporting between displays)
+        if (Math.abs(dx) < 200 && Math.abs(dy) < 200) {
+          wobbleX.velocity += dx * 0.6;
+          wobbleY.velocity += dy * 0.6;
+        }
+      }
+      lastMouse = { x: clientX, y: clientY };
+    }
+
+    // ---------- Click reactions ----------
+
+    let mood = 'idle';        // 'idle' | 'happy' | 'melt'
+    let moodTimer = 0;
+    let recentClicks = [];
+
+    // Current body shape, updated every frame; used for hit-testing clicks
+    let body = { cx: x, cy: faceY, rx: baseRadius, ry: baseRadius };
+
+    function hitsBody(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const dx = (clientX - rect.left - body.cx) / body.rx;
+      const dy = (clientY - rect.top - body.cy) / body.ry;
+      return dx * dx + dy * dy <= 1.15;
+    }
+
+    function onPoke() {
+      if (mood === 'melt') {
+        // Poking a puddle just makes it ripple
+        wobbleX.velocity += (Math.random() - 0.5) * 300;
+        return;
+      }
+
+      const now = performance.now();
+      recentClicks = recentClicks.filter((t) => now - t < 900);
+      recentClicks.push(now);
+
+      if (recentClicks.length >= 3) {
+        recentClicks = [];
+        mood = 'melt';
+        moodTimer = 2.4;
+        melt.target = 1;
+        logState('melting');
+      } else {
+        mood = 'happy';
+        moodTimer = 0.9;
+        squash.velocity += 4.5; // squish down, the spring bounces it back up
+        logState('booped');
+      }
+    }
+
+    function updateMood(dt) {
+      if (mood === 'idle') return;
+      moodTimer -= dt;
+      if (moodTimer > 0) return;
+
+      if (mood === 'melt') {
+        // Reform with a stretchy boing
+        melt.target = 0;
+        squash.velocity -= 5;
+        logState('reformed');
+      }
+      mood = 'idle';
+    }
+
+    // A press becomes a drag once the cursor moves a few px; otherwise it's a click
+    let press = null;
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.button === 0) press = { x: e.clientX, y: e.clientY };
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!press) return;
+      if (Math.hypot(e.clientX - press.x, e.clientY - press.y) > 4) {
+        press = null;
+        if (window.tiny) tiny.win.startDrag();
+      }
+    });
+    window.addEventListener('mouseup', (e) => {
+      if (press && hitsBody(e.clientX, e.clientY)) onPoke();
+      press = null;
+    });
+
+    if (window.tiny) {
+      // Inside tinyjs: follow the cursor anywhere on screen, not just in the window
+      tiny.win.setAllSpaces(true); // stay visible across Spaces and over fullscreen apps
+
+      async function pollCursor() {
+        try {
+          const { window: w } = await tiny.app.mousePosition();
+          lookAt(w.x, w.y);
+        } catch (_) { /* bridge not ready yet */ }
+        setTimeout(pollCursor, 50);
+      }
+      pollCursor();
+    } else {
+      // Plain browser fallback (for previewing the file directly)
+      window.addEventListener('mousemove', (e) => lookAt(e.clientX, e.clientY));
+      document.documentElement.addEventListener('mouseleave', () => {
+        lookX.target = 0;
+        lookY.target = 0;
+        lastMouse = null;
+      });
+    }
+
+    // ---------- Face on a sphere ----------
+
+    // Project a point given as angles on the body's sphere (a = around, b = up/down)
+    // after the head has turned by (turnA, turnB). Returns screen position and
+    // foreshortening factors, so features squeeze as they roll toward the edge.
+    function projectOnBody(a, b, turnA, turnB) {
+      const A = a + turnA;
+      const B = b + turnB;
+      return {
+        x: body.cx + Math.sin(A) * Math.cos(B) * body.rx,
+        y: body.cy + Math.sin(B) * body.ry,
+        sx: Math.cos(A),
+        sy: Math.cos(B),
+      };
+    }
+
+    // Each eye is a small sphere: the pupil rolls across it and flattens near the
+    // rim, while the glint stays fixed to the light (top-left)
+    function drawEye(p, gazeA, gazeB, openness) {
+      const r = 7;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.scale(p.sx, p.sy * Math.max(openness, 0.08));
+
+      // Eyeball with a little shading so it reads as round
+      const shade = ctx.createRadialGradient(-2, -2.5, 1, 0, 0, r);
+      shade.addColorStop(0, '#FFFFFF');
+      shade.addColorStop(1, '#D6E4F2');
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = shade;
+      ctx.fill();
+      ctx.clip();
+
+      // Pupil projected on the eyeball sphere
+      const pr = 3.4;
+      ctx.beginPath();
+      ctx.ellipse(
+        Math.sin(gazeA) * r * 0.62,
+        Math.sin(gazeB) * r * 0.62,
+        pr * Math.cos(gazeA), pr * Math.cos(gazeB), 0, 0, Math.PI * 2
+      );
+      ctx.fillStyle = '#1B2333';
+      ctx.fill();
+
+      // Fixed specular glint
+      ctx.beginPath();
+      ctx.arc(-2.2, -2.6, 1.4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ^ shaped happy eye
+    function drawHappyEye(p) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.scale(p.sx, p.sy);
+      ctx.beginPath();
+      ctx.moveTo(-6, 2);
+      ctx.quadraticCurveTo(0, -6, 6, 2);
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#1B2333';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Droopy, blissed-out melted eye
+    function drawMeltedEye(p) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.scale(p.sx, p.sy);
+      ctx.beginPath();
+      ctx.moveTo(-6, -1);
+      ctx.quadraticCurveTo(0, 4, 6, -1);
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#1B2333';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawMouth(p) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.scale(p.sx, p.sy);
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#3A6FB8';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      if (mood === 'happy') {
+        // Open grin
+        ctx.arc(0, -1, 7, 0, Math.PI);
+        ctx.closePath();
+        ctx.fillStyle = '#2C4F86';
+        ctx.fill();
+        ctx.stroke();
+      } else if (mood === 'melt') {
+        // Wobbly goo smile
+        ctx.moveTo(-8, 0);
+        for (let i = -8; i <= 8; i++) ctx.lineTo(i, Math.sin(i * 0.9 + time * 3) * 1.5);
+        ctx.stroke();
+      } else {
+        ctx.arc(0, 0, 6, 0.15, Math.PI - 0.15);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawBlush(p, alpha) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.scale(p.sx, p.sy);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 6, 3.5, 0, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 140, 170, ${alpha})`;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ---------- Main loop ----------
+
+    // Blinking
+    let nextBlink = 2 + Math.random() * 3;
+    let blinkT = -1; // -1 = not blinking, otherwise 0..1 progress
+
+    let lastFrame = performance.now();
+
+    function drawPet(now) {
+      // Frame-rate independent timestep, clamped so a backgrounded window doesn't explode the springs
+      const dt = Math.min((now - lastFrame) / 1000, 1 / 30);
+      lastFrame = now;
+      time += dt * 3;
+
+      for (const s of [lookX, lookY, wobbleX, wobbleY, squash, melt]) stepSpring(s, dt);
+      updateMood(dt);
+
+      ctx.clearRect(0, 0, SIZE, SIZE);
+
+      // 1. Shape: breathing + wobble + squash + melt, bottom planted on the ground
+      const breath = Math.sin(time);
+      const wx = clamp(wobbleX.value * 0.05, -8, 8);
+      const wy = clamp(wobbleY.value * 0.05, -8, 8);
+      const sq = clamp(squash.value, -0.35, 0.45);
+      const m = clamp(melt.value, 0, 1.1);
+
+      let rx = baseRadius + breath * 1.5 + Math.abs(wx) - Math.abs(wy) * 0.5;
+      let ry = baseRadius - breath * 2 + Math.abs(wy) - Math.abs(wx) * 0.5;
+      // Roughly volume-preserving: what's lost in height goes into width
+      rx *= 1 + sq * 0.6 + m * 0.5;
+      ry *= 1 - sq - m * 0.58;
+
+      body = { cx: x + wx * 0.5, cy: groundY - ry, rx, ry };
+
+      // Ground shadow
+      ctx.beginPath();
+      ctx.ellipse(body.cx, groundY + 3, rx * 0.85, 5, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+      ctx.fill();
+
+      // Melt drips spreading from the puddle's edges
+      if (m > 0.05) {
+        ctx.fillStyle = '#4EA8DE';
+        for (const side of [-1, 1]) {
+          ctx.beginPath();
+          ctx.ellipse(body.cx + side * rx * 0.95, groundY - 3, 9 * m, 4 * m, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // 2. Body
+      ctx.beginPath();
+      ctx.ellipse(body.cx, body.cy, rx, ry, wx * 0.01, 0, Math.PI * 2);
+      ctx.fillStyle = '#4EA8DE'; // Soft neon slime blue
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#5390D9';
+      ctx.stroke();
+
+      // 3. Face rolls around the body sphere: the head turns part of the way,
+      //    the eyeballs do the rest
+      const turnA = lookX.value * 0.45;
+      const turnB = lookY.value * 0.3 + m * 0.35; // melted face slides down
+      const leftEye = projectOnBody(-0.36, -0.12, turnA, turnB);
+      const rightEye = projectOnBody(0.36, -0.12, turnA, turnB);
+      const mouth = projectOnBody(0, 0.22, turnA, turnB);
+
+      nextBlink -= dt;
+      if (nextBlink <= 0 && blinkT < 0 && mood === 'idle') blinkT = 0;
+      let openness = 1;
+      if (blinkT >= 0) {
+        blinkT += dt / 0.18;
+        openness = Math.abs(1 - blinkT * 2);
+        if (blinkT >= 1) {
+          blinkT = -1;
+          nextBlink = 2 + Math.random() * 4;
+        }
+      }
+
+      if (mood === 'happy') {
+        drawBlush(projectOnBody(-0.55, 0.12, turnA, turnB), 0.6);
+        drawBlush(projectOnBody(0.55, 0.12, turnA, turnB), 0.6);
+        drawHappyEye(leftEye);
+        drawHappyEye(rightEye);
+      } else if (mood === 'melt') {
+        drawMeltedEye(leftEye);
+        drawMeltedEye(rightEye);
+      } else {
+        drawEye(leftEye, lookX.value, lookY.value, openness);
+        drawEye(rightEye, lookX.value, lookY.value, openness);
+      }
+
+      // 4. Mouth
+      drawMouth(mouth);
+
+      // 5. Glossy highlight, fixed to the light and drawn over the face like a
+      //    shine on the jelly's surface
+      ctx.beginPath();
+      ctx.ellipse(body.cx - rx * 0.4, body.cy - ry * 0.5, 10, 6 * (ry / baseRadius), -0.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.fill();
+
+      requestAnimationFrame(drawPet);
+    }
+
+    // Start Engine
+    requestAnimationFrame(drawPet);
+  </script>
+</body>
+</html>
