@@ -3,7 +3,7 @@
   "title": "Procedural Pet",
   "id": "app.desktop.procedural.pet",
   "version": "1.0.0",
-  "size": "200x200",
+  "size": "220x320",
   "backend": "src/main.js",
   "contextMenu": false,
   "chrome": {

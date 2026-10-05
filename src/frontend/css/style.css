@@ -1,0 +1,116 @@
+:root {
+  --panel: rgba(255, 255, 255, 0.94);
+  --panel-edge: rgba(78, 168, 222, 0.28);
+  --track: #EAF0F8;
+  --shadow: rgba(40, 60, 110, 0.22);
+
+  --food-a: #FFC27A;  --food-b: #FF9A62;  --food-bg: #FFE6CC;  --food-edge: #F2BC8C;  --food-ink: #8A4B1D;
+  --fun-a:  #FFA3C4;  --fun-b:  #FF6FA3;  --fun-bg:  #FFDBE8;  --fun-edge:  #EFA5C1;  --fun-ink:  #8C2F55;
+  --nrg-a:  #C3B4FF;  --nrg-b:  #9B87F5;  --nrg-bg:  #E6E0FF;  --nrg-edge:  #BAADF0;  --nrg-ink:  #4B3C99;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --panel: rgba(32, 37, 54, 0.94);
+    --panel-edge: rgba(78, 168, 222, 0.35);
+    --track: #3A4262;
+    --shadow: rgba(0, 0, 0, 0.4);
+  }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+body {
+  width: 220px;
+  height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+canvas {
+  display: block;
+  width: 200px;
+  height: 200px;
+  background: transparent !important;
+  cursor: grab;
+}
+
+/* Status card tucked under the pet (overlaps the canvas's empty bottom strip) */
+.panel {
+  box-sizing: border-box;
+  width: 196px;
+  margin-top: -24px;
+  padding: 10px 11px 11px;
+  background: var(--panel);
+  border-radius: 20px;
+  box-shadow: 0 6px 16px var(--shadow), inset 0 0 0 1.5px var(--panel-edge);
+  cursor: grab;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 14px;
+}
+.stat + .stat { margin-top: 7px; }
+.stat svg { width: 13px; height: 13px; flex: none; }
+
+.bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--track);
+  overflow: hidden;
+}
+.fill {
+  height: 100%;
+  width: 50%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+.stat.low .fill { animation: pulse 0.9s ease-in-out infinite alternate; }
+@keyframes pulse { from { opacity: 1; } to { opacity: 0.45; } }
+
+.food { color: var(--food-b); } .food .fill { background: linear-gradient(90deg, var(--food-a), var(--food-b)); }
+.fun  { color: var(--fun-b); }  .fun  .fill { background: linear-gradient(90deg, var(--fun-a), var(--fun-b)); }
+.nrg  { color: var(--nrg-b); }  .nrg  .fill { background: linear-gradient(90deg, var(--nrg-a), var(--nrg-b)); }
+
+.actions {
+  display: flex;
+  gap: 7px;
+  margin-top: 11px;
+}
+.actions button {
+  flex: 1;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  border-radius: 11px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s, opacity 0.2s;
+}
+.actions button svg { width: 12px; height: 12px; }
+.actions button:active:not(:disabled) { transform: translateY(2px); }
+.actions button:disabled { opacity: 0.45; cursor: default; }
+
+#feed  { background: var(--food-bg); color: var(--food-ink); box-shadow: 0 3px 0 var(--food-edge); }
+#play  { background: var(--fun-bg);  color: var(--fun-ink);  box-shadow: 0 3px 0 var(--fun-edge); }
+#sleep { background: var(--nrg-bg);  color: var(--nrg-ink);  box-shadow: 0 3px 0 var(--nrg-edge); }
+#feed:active:not(:disabled)  { box-shadow: 0 1px 0 var(--food-edge); }
+#play:active:not(:disabled)  { box-shadow: 0 1px 0 var(--fun-edge); }
+#sleep:active:not(:disabled) { box-shadow: 0 1px 0 var(--nrg-edge); }
