@@ -21,6 +21,7 @@ function applyDock(d) {
   if (side) {
     squash.velocity += 2.5;                      // little bump as the cards click together
     if (d.by === me) sfx('snap');
+    setTimeout(() => onFriend('hello'), 350); // say hi once the cards click
   } else if (was) {
     wobbleX.velocity += was === 'left' ? -160 : 160;  // wobble apart
   }

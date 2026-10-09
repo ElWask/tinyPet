@@ -6,7 +6,7 @@ let lastMouse = null;
 
 // Point the gaze at a cursor position given in window (client) coordinates
 function lookAt(clientX, clientY) {
-  if (snack || mood === 'sleep') return; // busy looking at food, or asleep
+  if (snack || mood === 'sleep' || glance > 0) return; // busy looking at food or a friend, or asleep
   const rect = canvas.getBoundingClientRect();
   const mouseX = clientX - rect.left - homeX;
   const mouseY = clientY - rect.top - faceY;

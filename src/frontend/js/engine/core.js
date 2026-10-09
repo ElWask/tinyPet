@@ -79,6 +79,7 @@ let snack = null;              // falling food: { x, y, vy }
 const hop = { y: 0, vy: 0 };   // jump offset (negative = up)
 const particles = [];          // hearts, z's and crumbs
 let nextZ = 0;
+let glance = 0;                // seconds left looking over at a docked friend
 
 // Current body shape, updated every frame; used for hit-testing clicks
 let body = { cx: homeX, cy: faceY, rx: baseRadius, ry: baseRadius };

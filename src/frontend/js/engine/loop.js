@@ -13,6 +13,8 @@ function frame(now) {
   lastFrame = now;
   time += dt * (mood === 'sleep' ? 1.4 : 3); // slow, deep breaths while asleep
 
+  updateGlance(dt);
+
   // Asleep: head nods down. Snack incoming: eyes lock onto it.
   if (mood === 'sleep') {
     lookX.target = 0;

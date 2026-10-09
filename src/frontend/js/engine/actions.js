@@ -23,6 +23,7 @@ function eatSnack() {
   squash.velocity += 3;
   sfx('chomp');
   sfx('chirp', 160);
+  tell('happy');
   for (let i = 0; i < 6; i++) {
     spawn('crumb', body.cx + (Math.random() - 0.5) * 10, body.cy, (Math.random() - 0.5) * 90, -60 - Math.random() * 80, 0.6);
   }
@@ -43,6 +44,7 @@ function play() {
   sway.velocity += (Math.random() < 0.5 ? -1 : 1) * 4;
   sfx('jump');
   bump('fun', 20);
+  tell('happy');
   bump('energy', -10);
   bump('food', -4);
   mood = 'happy';
@@ -58,6 +60,7 @@ function goToSleep() {
   snack = null;
   nextZ = 0.4;
   pet.sleep?.();
+  tell('sleep');
   sfx('sleep');
   logState('sleeping');
 }
@@ -65,6 +68,7 @@ function goToSleep() {
 function wakeUp() {
   mood = 'idle';
   pet.wake?.();
+  tell('wake');
   squash.velocity -= 3;  // stretchy good-morning boing
   sfx('wake');
   logState('awake');
@@ -87,11 +91,13 @@ function onPoke() {
     mood = 'special';
     moodTimer = pet.special.duration;
     pet.special.start();
+    tell('special');
   } else {
     mood = 'happy';
     moodTimer = 0.9;
     squash.velocity += 4.5; // squish down, the spring bounces it back up
     sfx('boop');
+    tell('poke');
     logState('booped');
   }
 }

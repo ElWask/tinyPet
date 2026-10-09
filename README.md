@@ -52,6 +52,7 @@ tinyjs builds for the OS it runs on, so a Mac can't produce a `.exe`. Either run
 | 🐾 badge (cat's card) | Opens the chick in its own window, or puts it away; drag each window anywhere |
 | ✕ badge (chick's card) | Puts the chick away |
 | Drag the pets side by side | Their windows snap together and the cards join into one; drag the card to move both, or grab a pet to pull it back out |
+| Leave them docked | They glance at each other, cheer when the other eats or plays, startle at a melt or puff, and yawn when the other falls asleep |
 
 ### Needs
 
@@ -87,6 +88,7 @@ Stats are saved every few seconds, separately for each pet. Each window remember
             │   ├── panel.js       bars and buttons
             │   ├── window.js      remembers the window position between launches
             │   ├── dock.js        snapping windows together (the backend decides)
+            │   ├── friend.js      docked pets reacting to each other
             │   └── loop.js        frame loop: physics and body shape, then the pet draws
             ├── pets/          one file per pet: its look, special move and sounds
             │   ├── cat.js

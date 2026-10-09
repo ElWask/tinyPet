@@ -84,6 +84,13 @@ export const api = {
     app.window(other).setPosition(x + offset, y);
   },
 
+  // Pass something that happened to a docked pet on to its partner
+  tell: async ({ kind }, app, meta) => {
+    const me = meta?.window || 'main';
+    const to = partnerOf(me);
+    if (to) app.push('friend', { to, from: me, kind });
+  },
+
   // A pet was pulled out of the pair
   undock: async (_, app, meta) => {
     if (partnerOf(meta?.window || 'main')) setDock(app, null);
