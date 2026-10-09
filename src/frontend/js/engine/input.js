@@ -48,7 +48,7 @@ window.addEventListener('mousemove', (e) => {
   if (!press) return;
   if (Math.hypot(e.clientX - press.x, e.clientY - press.y) > 4) {
     press = null;
-    if (window.tiny) tiny.win.startDrag();
+    dragWindow('pet');
   }
 });
 window.addEventListener('mouseup', (e) => {

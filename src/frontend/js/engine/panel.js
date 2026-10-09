@@ -50,5 +50,5 @@ renderMute();
 
 // Dragging the card (but not its buttons) moves the window too
 document.querySelector('#panel').addEventListener('mousedown', (e) => {
-  if (e.button === 0 && !e.target.closest('button') && window.tiny) tiny.win.startDrag();
+  if (e.button === 0 && !e.target.closest('button')) dragWindow('card');
 });

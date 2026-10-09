@@ -57,6 +57,54 @@ canvas {
   position: relative;
 }
 
+/* Docked: this window is one half of a shared card. The inner corners go
+   square, the inner shadow is cut so it doesn't fall on the other half, and
+   the badge that would sit on the seam moves next to its neighbour. */
+.panel { transition: border-radius 0.15s; }
+.docked-left .panel {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  clip-path: inset(-30px 0 -30px -30px);
+}
+.docked-right .panel {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  clip-path: inset(-30px -30px -30px 0);
+}
+/* Merging: the cards squish against each other like jelly (pivoting on the
+   seam so they never gap), and a glow runs down the seam */
+.docked-left .panel  { transform-origin: right center; }
+.docked-right .panel { transform-origin: left center; }
+.panel.merging { animation: merge-squish 0.42s ease-out; }
+@keyframes merge-squish {
+  0%   { transform: scaleX(1); }
+  30%  { transform: scaleX(0.965) scaleY(1.03); }
+  60%  { transform: scaleX(1.012) scaleY(0.99); }
+  100% { transform: scaleX(1); }
+}
+.panel::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+.docked-left .panel::after  { right: 0; }
+.docked-right .panel::after { left: 0; }
+.panel.merging::after { animation: seam-glow 0.7s ease-out; }
+@keyframes seam-glow {
+  0%   { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+.docked-left .mute { right: auto; left: 22px; }
+.docked-right .switch { left: auto; right: 22px; }
+
 /* Small round badges on the card's top corners: pet switcher left, sound right */
 .badge {
   position: absolute;

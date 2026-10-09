@@ -20,6 +20,8 @@ const SFX = {
   yawn:   [.35, .05, 330, .08, .12, .25, 1, 1, -.8],                // sleepy sigh
   sleep:  [.3, 0, 300, .1, .1, .3, 0, 1, -.5],                      // soft "hmm" as it dozes off
   wake:   [.4, .05, 400, .02, .05, .15, 0, 1, 3],                   // bright chirp up
+  snap:   [.5, .05, 320, 0, .02, .06, 1, 1, 6, 0, 240, .04],        // cards click together
+  unsnap: [.4, .05, 520, 0, .03, .1, 0, 1, -7],                     // pulled apart
 };
 
 const MUTE_KEY = 'tinypet-muted';
