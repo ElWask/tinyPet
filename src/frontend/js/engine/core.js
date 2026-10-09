@@ -49,7 +49,19 @@ function logState(message) {
 // ---------- Pets ----------
 
 // Each file in pets/ calls registerPet() with its look and its quirks;
-// main.js picks which one is active. See pets/slime.js for the full contract.
+// main.js picks which one is active. A pet is:
+//   id, name        identity
+//   accent          colour for the card's edge and badges
+//   springs         extra springs the engine steps every frame
+//   spread()        optional { x, y }: extra widening/flattening of the body
+//   draw(f)         draws body and face; must set f.mouth = { x, y } for snacks
+//   drawOver(f)     optional, drawn after the snack (shines, things in front)
+//   drawSnack(x,y)  optional, defaults to the apple
+//   special         { duration, start(), end(), poke() } for 3 quick pokes
+//   sleep(), wake() optional pose changes
+//   sounds          optional ZzFX overrides/extras, see engine/sound.js
+// f carries { dt, wx, openness, turnA, turnB } from the engine; `body` holds
+// the current { cx, cy, rx, ry }.
 const PETS = {};
 let pet = null;
 

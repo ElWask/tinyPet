@@ -1,6 +1,7 @@
 :root {
   --panel: rgba(255, 255, 255, 0.94);
-  --panel-edge: rgba(78, 168, 222, 0.28);
+  --accent: #5AB3E6;   /* set per pet by main.js */
+  --panel-edge: color-mix(in srgb, var(--accent) 30%, transparent);
   --track: #EAF0F8;
   --shadow: rgba(40, 60, 110, 0.22);
 
@@ -11,7 +12,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --panel: rgba(32, 37, 54, 0.94);
-    --panel-edge: rgba(78, 168, 222, 0.35);
+    --panel-edge: color-mix(in srgb, var(--accent) 38%, transparent);
     --track: #3A4262;
     --shadow: rgba(0, 0, 0, 0.4);
   }
@@ -56,11 +57,10 @@ canvas {
   position: relative;
 }
 
-/* Sound toggle: a small round badge sitting on the card's top-right corner */
-.mute {
+/* Small round badges on the card's top corners: pet switcher left, sound right */
+.badge {
   position: absolute;
   top: -9px;
-  right: -5px;
   width: 22px;
   height: 22px;
   padding: 0;
@@ -70,13 +70,15 @@ canvas {
   border: none;
   border-radius: 50%;
   background: var(--panel);
-  color: #5AB3E6;
+  color: var(--accent);
   box-shadow: 0 2px 6px var(--shadow), inset 0 0 0 1.5px var(--panel-edge);
   cursor: pointer;
   transition: transform 0.08s, color 0.2s;
 }
-.mute svg { width: 12px; height: 12px; }
-.mute:active { transform: scale(0.9); }
+.badge svg { width: 12px; height: 12px; }
+.badge:active { transform: scale(0.9); }
+.switch { left: -5px; }
+.mute { right: -5px; }
 .mute.off { color: #A3AEC2; }
 
 .stat {

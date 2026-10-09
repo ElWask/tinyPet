@@ -1,8 +1,9 @@
 // Little things that fly around the pet: hearts, z's and crumbs, plus the
 // default snack.
 
-function spawn(kind, px, py, vx, vy, life) {
-  particles.push({ kind, x: px, y: py, vx, vy, life, max: life });
+// kind: 'heart' | 'z' | 'crumb'; crumbs take an optional colour (fluff, seeds...)
+function spawn(kind, px, py, vx, vy, life, color) {
+  particles.push({ kind, x: px, y: py, vx, vy, life, max: life, color });
 }
 
 function updateParticles(dt) {
@@ -69,7 +70,7 @@ function drawParticles() {
     } else {
       ctx.beginPath();
       ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
-      ctx.fillStyle = '#E8A15A';
+      ctx.fillStyle = p.color || '#E8A15A';
       ctx.fill();
     }
   }

@@ -4,11 +4,14 @@
 const stats = { food: 80, fun: 80, energy: 80 };
 const DRAIN = { food: 1 / 50, fun: 1 / 40, energy: 1 / 70 };
 const SLEEP_REST = 1 / 1.5;   // energy gained per second asleep
-const STORE_KEY = 'tinypet-stats';
+
+// Every pet keeps its own needs
+const statsKey = () => 'tinypet-stats-' + pet.id;
 
 function loadStats() {
+  stats.food = stats.fun = stats.energy = 80;
   try {
-    const saved = JSON.parse(localStorage.getItem(STORE_KEY));
+    const saved = JSON.parse(localStorage.getItem(statsKey()));
     if (!saved) return;
     // Catch up on the time the app was closed (capped at a day), but never
     // let a stat sink below 10 while you were away
@@ -25,7 +28,7 @@ function loadStats() {
 
 function saveStats() {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ ...stats, asleep: mood === 'sleep', at: Date.now() }));
+    localStorage.setItem(statsKey(), JSON.stringify({ ...stats, asleep: mood === 'sleep', at: Date.now() }));
   } catch (_) {}
 }
 
