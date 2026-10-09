@@ -1,5 +1,5 @@
-// Shared setup and state: canvas, math helpers, springs and the pet's state.
-// Loaded first; the other scripts read and write these globals.
+// Shared setup and state: canvas, math helpers, springs, the pet registry and
+// the pet's state. Loaded first; the other scripts read and write these globals.
 
 const canvas = document.getElementById('petCanvas');
 const ctx = canvas.getContext('2d');
@@ -11,10 +11,10 @@ canvas.width = SIZE * dpr;
 canvas.height = SIZE * dpr;
 ctx.scale(dpr, dpr);
 
-// Blob parameters
+// Body parameters, shared by every pet
 const baseRadius = 45;
-const x = SIZE / 2;
-const groundY = 168;            // the blob sits on this line; squash keeps its bottom planted
+const homeX = SIZE / 2;         // where the body rests horizontally
+const groundY = 168;            // the body sits on this line; squash keeps its bottom planted
 const faceY = groundY - baseRadius;
 let time = 0;
 
@@ -38,25 +38,35 @@ const wobbleX = spring(180, 6);
 const wobbleY = spring(180, 6);
 // Squash: >0 flattens, <0 stretches. Low damping = bouncy jelly.
 const squash = spring(260, 7);
-// Melt: 0 = solid, 1 = puddle. Soft and slow, like goo.
-const melt = spring(28, 8);
-// Head sprout lean in radians: loose, so it keeps swaying after a bounce
+// Lean of whatever sticks out of the pet (sprout, tuft, ears) in radians:
+// loose, so it keeps swaying after a bounce. Pets set its target.
 const sway = spring(70, 3.5);
 
 function logState(message) {
   if (window.tiny) tiny.api.call('logState', { message }).catch(() => {});
 }
 
+// ---------- Pets ----------
+
+// Each file in pets/ calls registerPet() with its look and its quirks;
+// main.js picks which one is active. See pets/slime.js for the full contract.
+const PETS = {};
+let pet = null;
+
+function registerPet(def) {
+  PETS[def.id] = def;
+}
+
 // ---------- Pet state ----------
 
-let mood = 'idle';        // 'idle' | 'happy' | 'melt' | 'sleep'
+let mood = 'idle';        // 'idle' | 'happy' | 'special' | 'sleep'
 let moodTimer = 0;
 let recentClicks = [];
 
-let snack = null;              // falling apple: { x, y, vy }
+let snack = null;              // falling food: { x, y, vy }
 const hop = { y: 0, vy: 0 };   // jump offset (negative = up)
 const particles = [];          // hearts, z's and crumbs
 let nextZ = 0;
 
 // Current body shape, updated every frame; used for hit-testing clicks
-let body = { cx: x, cy: faceY, rx: baseRadius, ry: baseRadius };
+let body = { cx: homeX, cy: faceY, rx: baseRadius, ry: baseRadius };

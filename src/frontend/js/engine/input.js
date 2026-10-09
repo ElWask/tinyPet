@@ -8,7 +8,7 @@ let lastMouse = null;
 function lookAt(clientX, clientY) {
   if (snack || mood === 'sleep') return; // busy looking at food, or asleep
   const rect = canvas.getBoundingClientRect();
-  const mouseX = clientX - rect.left - x;
+  const mouseX = clientX - rect.left - homeX;
   const mouseY = clientY - rect.top - faceY;
 
   // Treat the cursor as sitting on a plane 140px in front of the face, so the

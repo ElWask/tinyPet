@@ -33,7 +33,7 @@ ui.feed.addEventListener('click', feed);
 ui.play.addEventListener('click', play);
 ui.sleep.addEventListener('click', () => {
   if (mood === 'sleep') wakeUp();
-  else if (mood !== 'melt') goToSleep();
+  else if (mood !== 'special') goToSleep();
 });
 
 const muteButton = document.querySelector('#mute');

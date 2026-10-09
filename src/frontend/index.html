@@ -57,14 +57,20 @@
   </div>
 
 
-  <script src="js/core.js"></script>
+  <!-- Shared engine -->
+  <script src="js/engine/core.js"></script>
   <script src="js/vendor/zzfx.js"></script>
-  <script src="js/sound.js"></script>
-  <script src="js/pet.js"></script>
-  <script src="js/draw.js"></script>
-  <script src="js/input.js"></script>
-  <script src="js/panel.js"></script>
-  <script src="js/window.js"></script>
+  <script src="js/engine/sound.js"></script>
+  <script src="js/engine/needs.js"></script>
+  <script src="js/engine/actions.js"></script>
+  <script src="js/engine/particles.js"></script>
+  <script src="js/engine/face.js"></script>
+  <script src="js/engine/input.js"></script>
+  <script src="js/engine/panel.js"></script>
+  <script src="js/engine/window.js"></script>
+  <script src="js/engine/loop.js"></script>
+  <!-- Pets: each registers itself -->
+  <script src="js/pets/slime.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
