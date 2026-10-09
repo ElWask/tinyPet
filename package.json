@@ -2,5 +2,9 @@
   "name": "procedural-desktop-pet",
   "version": "1.0.0",
   "main": "src/main.js",
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "dev": "tinyjs dev",
+    "build": "tinyjs build"
+  }
 }

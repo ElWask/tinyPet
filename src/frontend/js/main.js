@@ -35,6 +35,7 @@ function drawPet(now) {
       hop.y = 0;
       hop.vy = 0;
       squash.velocity += 3.5;
+      sfx('land');
       sway.velocity += (Math.random() < 0.5 ? -1 : 1) * 5; // sprout flops on landing
     }
   }

@@ -1,4 +1,4 @@
-// The status card: bars that mirror the stats and the three action buttons.
+// The status card: bars that mirror the stats, the three action buttons and the sound toggle.
 
 const ui = {
   food: document.querySelector('#stat-food'),
@@ -35,6 +35,18 @@ ui.sleep.addEventListener('click', () => {
   if (mood === 'sleep') wakeUp();
   else if (mood !== 'melt') goToSleep();
 });
+
+const muteButton = document.querySelector('#mute');
+function renderMute() {
+  muteButton.classList.toggle('off', muted);
+  muteButton.querySelector('use').setAttribute('href', muted ? '#i-muted' : '#i-sound');
+}
+muteButton.addEventListener('click', () => {
+  setMuted(!muted);
+  renderMute();
+  sfx('boop'); // a little confirmation when turning sound back on
+});
+renderMute();
 
 // Dragging the card (but not its buttons) moves the window too
 document.querySelector('#panel').addEventListener('mousedown', (e) => {

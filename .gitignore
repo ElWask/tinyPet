@@ -11,3 +11,6 @@ node_modules/
 # Editors
 .idea/
 .vscode/
+
+# Claude Code local config
+.claude/

@@ -54,6 +54,12 @@ tinyjs builds for the OS it runs on, so a Mac can't produce a `.exe`. Either run
 
 Three bars under the pet (Food, Fun, Energy) drain slowly while it's awake. When any of them drops below 20 the pet gets glum (half-closed eyes, a little frown), and below 25 the bar pulses. Feeding a full pet makes it shake its head, and a pet with no energy yawns instead of jumping.
 
+### Sound
+
+Every reaction has a little sound effect: boops, chomps, boings, a melting bloop. Like the graphics, the sounds aren't files. [ZzFX](https://github.com/KilledByAPixel/ZzFX) synthesizes each one from a short list of numbers in `js/sound.js`. To tweak a sound, paste its list into the [ZzFX designer](https://killedbyapixel.github.io/ZzFX/), adjust it, and copy it back. The speaker badge on the card's corner mutes everything, and the setting is remembered.
+
+### Saving
+
 Stats are saved every few seconds. When you reopen the app it catches up on the time it was closed, but no bar drops below 10 while you're away.
 
 ## Project layout
@@ -68,10 +74,13 @@ Stats are saved every few seconds. When you reopen the app it catches up on the 
         ├── css/style.css  card and button styles (light + dark)
         └── js/            plain scripts, loaded in this order:
             ├── core.js    canvas setup, springs, shared state
+            ├── vendor/    ZzFX sound synth (MIT, see zzfx.LICENSE)
+            ├── sound.js   sound effects and mute
             ├── pet.js     needs, actions (feed/play/sleep), moods, particles
             ├── draw.js    face, sprout, apple, hearts: pure drawing
             ├── input.js   cursor tracking, poke vs drag
             ├── panel.js   bars and buttons
+            ├── window.js  remembers the window position between launches
             └── main.js    frame loop and startup
 ```
 

@@ -17,7 +17,7 @@ jobs:
   macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install tinyjs
         run: |
@@ -31,15 +31,16 @@ jobs:
       - name: Package
         run: ditto -c -k --keepParent dist/*.app ProceduralPet-macos.zip
 
-      - uses: actions/upload-artifact@v4
+      # archive: false uploads the zip as-is, so the download isn't a zip in a zip
+      - uses: actions/upload-artifact@v7
         with:
-          name: ProceduralPet-macos
           path: ProceduralPet-macos.zip
+          archive: false
 
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install tinyjs
         shell: pwsh
@@ -51,7 +52,7 @@ jobs:
         shell: pwsh
         run: tinyjs build
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ProceduralPet-windows
           path: dist/
