@@ -4,7 +4,8 @@
 // changed. getState's x/y use the same units setPosition takes.
 
 if (window.tiny) {
-  const POS_KEY = 'windowPosition';
+  // Each pet window remembers its own spot (the main one keeps the original key)
+  const POS_KEY = tiny.win.id === 'main' ? 'windowPosition' : 'windowPosition-' + tiny.win.id;
   let savedPos = null;
 
   async function savePosition() {
@@ -18,7 +19,12 @@ if (window.tiny) {
 
   (async () => {
     try {
-      const pos = await tiny.store.get(POS_KEY);
+      // A friend just brought out by the paw badge goes beside the cat, once;
+      // otherwise every window returns to its own remembered spot
+      const SPAWN_KEY = 'spawnAt-' + tiny.win.id;
+      const spawn = tiny.win.id === 'main' ? null : await tiny.store.get(SPAWN_KEY);
+      if (spawn) await tiny.store.delete(SPAWN_KEY);
+      const pos = spawn || await tiny.store.get(POS_KEY);
       if (pos && Number.isFinite(pos.x) && Number.isFinite(pos.y)) {
         tiny.win.setPosition(pos.x, pos.y);
         // A monitor may have been unplugged since: pull the pet back on screen

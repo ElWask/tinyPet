@@ -62,7 +62,7 @@ function drawEye(p, gazeA, gazeB, openness) {
 }
 
 // ^ shaped happy eye
-function drawHappyEye(p) {
+function drawHappyEye(p, ink = '#1B2333') {
   ctx.save();
   ctx.translate(p.x, p.y);
   ctx.scale(p.sx, p.sy);
@@ -71,13 +71,13 @@ function drawHappyEye(p) {
   ctx.quadraticCurveTo(0, -7.5, 7.5, 2.5);
   ctx.lineWidth = 3;
   ctx.lineCap = 'round';
-  ctx.strokeStyle = '#1B2333';
+  ctx.strokeStyle = ink;
   ctx.stroke();
   ctx.restore();
 }
 
 // Droopy closed eye: asleep or blissed out
-function drawClosedEye(p) {
+function drawClosedEye(p, ink = '#1B2333') {
   ctx.save();
   ctx.translate(p.x, p.y);
   ctx.scale(p.sx, p.sy);
@@ -86,7 +86,7 @@ function drawClosedEye(p) {
   ctx.quadraticCurveTo(0, 5, 7, -1);
   ctx.lineWidth = 2.8;
   ctx.lineCap = 'round';
-  ctx.strokeStyle = '#1B2333';
+  ctx.strokeStyle = ink;
   ctx.stroke();
   ctx.restore();
 }
@@ -164,14 +164,19 @@ function blushAlpha() {
   return mood === 'happy' ? 0.7 : isSad() ? 0.18 : 0.38;
 }
 
-// Both eyes in the style the mood calls for
-function drawEyes(left, right, openness) {
+// Both eyes in the style the mood calls for. `ink` colours the line-drawn
+// happy/closed eyes (light on dark pets); `size` scales them (1 = default).
+function drawEyes(left, right, openness, ink, size = 1) {
+  if (size !== 1) {
+    left = { ...left, sx: left.sx * size, sy: left.sy * size };
+    right = { ...right, sx: right.sx * size, sy: right.sy * size };
+  }
   if (mood === 'happy') {
-    drawHappyEye(left);
-    drawHappyEye(right);
+    drawHappyEye(left, ink);
+    drawHappyEye(right, ink);
   } else if (mood === 'special' || mood === 'sleep') {
-    drawClosedEye(left);
-    drawClosedEye(right);
+    drawClosedEye(left, ink);
+    drawClosedEye(right, ink);
   } else {
     // Glum pets look half-lidded
     if (isSad()) openness = Math.min(openness, 0.65);

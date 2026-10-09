@@ -15,30 +15,12 @@
     light: '#FFF8C4',
     mid: '#FFE066',
     dark: '#F8C443',
-    line: '#E3A33A',
+    line: '#E9AC45',
     wing: '#F9CF4D',
     beak: '#FF9F43',
     beakDark: '#E8772E',
     fluff: '#FFD84D',
   };
-
-  // Ellipse with a scalloped edge, so the outline reads as fluff
-  function fluffPath(cx, cy, rx, ry, rot, bumps, depth) {
-    ctx.beginPath();
-    const pt = (a, k) => {
-      const ex = Math.cos(a) * rx * k;
-      const ey = Math.sin(a) * ry * k;
-      return [cx + ex * Math.cos(rot) - ey * Math.sin(rot), cy + ex * Math.sin(rot) + ey * Math.cos(rot)];
-    };
-    const step = (Math.PI * 2) / bumps;
-    ctx.moveTo(...pt(0, 1));
-    for (let i = 0; i < bumps; i++) {
-      const [qx, qy] = pt((i + 0.5) * step, 1 + depth);
-      const [ex, ey] = pt((i + 1) * step, 1);
-      ctx.quadraticCurveTo(qx, qy, ex, ey);
-    }
-    ctx.closePath();
-  }
 
   // Three curly feathers on the head, leaning with `sway`
   function drawTuft(bx, by, angle) {
@@ -60,16 +42,17 @@
     ctx.restore();
   }
 
+  // Small rounded wing hugging the side, pivoting at the shoulder to flap
   function drawWing(side, angle) {
     const { cx, cy, rx, ry } = body;
     ctx.save();
-    ctx.translate(cx + side * rx * 0.88, cy + ry * 0.05);
+    ctx.translate(cx + side * rx * 0.86, cy + ry * 0.12);
     ctx.rotate(-side * angle);
-    fluffPath(side * 4, 7, 7, 12, side * -0.35, 7, 0.12);
+    ctx.beginPath();
+    ctx.ellipse(side * 2.5, 6, 6.5, 10.5, side * -0.35, 0, Math.PI * 2);
     ctx.fillStyle = C.wing;
     ctx.fill();
     ctx.lineWidth = 2.5;
-    ctx.lineJoin = 'round';
     ctx.strokeStyle = C.line;
     ctx.stroke();
     ctx.restore();
@@ -101,7 +84,7 @@
 
     ctx.save();
     ctx.translate(pt.x, pt.y);
-    ctx.scale(pt.sx, pt.sy);
+    ctx.scale(pt.sx * 0.75, pt.sy * 0.75); // small beak = cuter
     ctx.lineJoin = 'round';
     // Lower beak
     ctx.beginPath();
@@ -138,11 +121,11 @@
     g.addColorStop(0, C.light);
     g.addColorStop(0.5, C.mid);
     g.addColorStop(1, C.dark);
-    fluffPath(cx, cy, rx, ry, f.wx * 0.01, 22, 0.05 + puffed * 0.05);
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, f.wx * 0.01, 0, Math.PI * 2);
     ctx.fillStyle = g;
     ctx.fill();
-    ctx.lineWidth = 3;
-    ctx.lineJoin = 'round';
+    ctx.lineWidth = 2.6;
     ctx.strokeStyle = C.line;
     ctx.stroke();
 
@@ -150,12 +133,15 @@
     drawWing(-1, wingAngle);
     drawWing(1, wingAngle);
 
-    // Face
+    // Face: big wide-set eyes, a small beak tucked between them, big cheeks
     const blush = blushAlpha();
-    drawBlush(projectOnBody(-0.62, 0.2, turnA, turnB), blush);
-    drawBlush(projectOnBody(0.62, 0.2, turnA, turnB), blush);
-    drawEyes(projectOnBody(-0.36, -0.08, turnA, turnB), projectOnBody(0.36, -0.08, turnA, turnB), f.openness);
-    f.mouth = projectOnBody(0, 0.18, turnA, turnB);
+    for (const side of [-1, 1]) {
+      const c = projectOnBody(side * 0.66, 0.24, turnA, turnB);
+      drawBlush({ ...c, sx: c.sx * 1.25, sy: c.sy * 1.25 }, Math.min(1, blush * 1.6)); // pinker on yellow
+    }
+    // Exactly the cat's eyes: same spot, size and colours (light happy/closed lines too)
+    drawEyes(projectOnBody(-0.4, -0.06, turnA, turnB), projectOnBody(0.4, -0.06, turnA, turnB), f.openness, '#E4E9FF');
+    f.mouth = projectOnBody(0, 0.21, turnA, turnB);
     drawBeak(f.mouth);
   }
 

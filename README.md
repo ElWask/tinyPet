@@ -1,6 +1,6 @@
 # Procedural Pet
 
-A tiny pet that lives on your Mac desktop: a squishy **mochi cat** or a fluffy **chick** (the paw badge switches between them). It floats above your windows, follows your cursor with its eyes, and reacts when you poke it.
+A tiny pet that lives on your Mac desktop: a squishy midnight-blue **mochi cat**, and a fluffy **chick** that can come out in its own window. It floats above your windows, follows your cursor with its eyes, and reacts when you poke it.
 
 There are no images or GIFs: each pet is drawn and animated entirely in code on an HTML5 `<canvas>`, using spring physics. It runs on [tinyjs](https://tinyjs.app), which gives it a transparent, frameless, always-on-top native window in about 6 MB.
 
@@ -49,7 +49,8 @@ tinyjs builds for the OS it runs on, so a Mac can't produce a `.exe`. Either run
 | **Feed** | A fish (cat) or a seed (chick) drops in, it opens wide and chomps it (+Food) |
 | **Play** | Jumps with little hearts (+Fun, costs Energy and a bit of Food) |
 | **Sleep** / **Wake** | Curls up, snores z's and recharges Energy; wakes on its own when full, or when you poke it |
-| 🐾 badge | Switches to the other pet; each one keeps its own needs |
+| 🐾 badge (cat's card) | Opens the chick in its own window, or puts it away; drag each window anywhere |
+| ✕ badge (chick's card) | Puts the chick away |
 
 ### Needs
 
@@ -61,7 +62,7 @@ Every reaction has a little sound effect: boops, chomps, boings, a melting bloop
 
 ### Saving
 
-Stats are saved every few seconds, separately for each pet. When you reopen the app it catches up on the time it was closed, but no bar drops below 10 while you're away.
+Stats are saved every few seconds, separately for each pet. Each window remembers its own position, and if the chick was out when you quit, it comes back next launch. When you reopen the app it catches up on the time it was closed, but no bar drops below 10 while you're away.
 
 ## Project layout
 
@@ -88,7 +89,7 @@ Stats are saved every few seconds, separately for each pet. When you reopen the 
             ├── pets/          one file per pet: its look, special move and sounds
             │   ├── cat.js
             │   └── chick.js
-            └── main.js        picks the pet, switching, startup
+            └── main.js        picks this window's pet, opens/closes friend windows, startup
 ```
 
 ### Adding a pet

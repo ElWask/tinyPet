@@ -13,17 +13,19 @@
 
   const m = () => clamp(melt.value, 0, 1.1);
 
+  // Midnight-blue mochi with pink ears, nose and cheeks
   const C = {
-    light: '#FFFFFF',
-    mid: '#FFF1EB',
-    dark: '#F7D6CC',
-    line: '#E3A99C',
-    innerEar: '#FFB8C6',
-    stripe: '#F0BFB2',
+    light: '#6273AD',
+    mid: '#3A4475',
+    dark: '#232A4A',
+    line: '#171B33',
+    innerEar: '#FF9EB8',
+    stripe: '#2A3156',
     nose: '#FF8FAB',
-    whisker: 'rgba(196, 128, 116, 0.55)',
+    whisker: 'rgba(214, 222, 255, 0.6)',
+    ink: '#E4E9FF',    // happy/closed eyes, light so they show on the dark fur
   };
-  const MOUTH = { line: '#B86F68', fill: '#8E4A50' };
+  const MOUTH = { line: '#D5DCF7', fill: '#151931' };
 
   function mochiFill(cx, cy, rx, ry) {
     const g = ctx.createRadialGradient(cx - rx * 0.35, cy - ry * 0.45, 2, cx, cy, Math.max(rx, ry) * 1.1);
@@ -33,34 +35,75 @@
     return g;
   }
 
-  // Rounded triangle ear, base at p, pointing up before rotation
-  function drawEar(p, angle) {
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(angle);
-    ctx.scale(Math.max(p.sx, 0.35), 1);
+  const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+
+  // Ear growing out of the head outline. Its two base corners sit on the
+  // body's edge at angles phi ± half, so the ear's outline continues the
+  // head's instead of being cut by it. `lean` tilts the tip (radians).
+  function drawEar(fill, rot, phi, lean) {
+    const { cx, cy, rx, ry } = body;
+    const half = 0.3;
+    const len = 21;
+    // Point on the (rotated) body ellipse at parametric angle t
+    const edge = (t, inset = 0) => {
+      const ex = Math.cos(t) * (rx - inset);
+      const ey = Math.sin(t) * (ry - inset);
+      return [cx + ex * Math.cos(rot) - ey * Math.sin(rot), cy + ex * Math.sin(rot) + ey * Math.cos(rot)];
+    };
+    const A = edge(phi - half);
+    const B = edge(phi + half);
+    const mid = lerp(A, B, 0.5);
+    // Outward normal at phi, then leaned
+    let nx = Math.cos(phi) / rx, ny = Math.sin(phi) / ry;
+    const n = Math.hypot(nx, ny);
+    nx /= n; ny /= n;
+    const a = rot + lean;
+    const dx = nx * Math.cos(a) - ny * Math.sin(a);
+    const dy = nx * Math.sin(a) + ny * Math.cos(a);
+    const tip = [mid[0] + dx * len, mid[1] + dy * len];
+    // Sides bulge slightly outward
+    const side = (P) => {
+      const c = lerp(P, tip, 0.5);
+      return [c[0] + (P[0] - mid[0]) * 0.18, c[1] + (P[1] - mid[1]) * 0.18];
+    };
+    const tl = lerp(tip, A, 0.14);
+    const tr = lerp(tip, B, 0.14);
+
+    const outline = () => {
+      ctx.moveTo(...A);
+      ctx.quadraticCurveTo(...side(A), ...tl);
+      ctx.quadraticCurveTo(...tip, ...tr);
+      ctx.quadraticCurveTo(...side(B), ...B);
+    };
+
+    // Fill reaches a little inside the head so it covers the head's outline
+    // between the corners: the ear and head become one shape
     ctx.beginPath();
-    ctx.moveTo(-13, 6);
-    ctx.quadraticCurveTo(-10, -12, -2.5, -21);
-    ctx.quadraticCurveTo(0, -24, 2.5, -21);
-    ctx.quadraticCurveTo(10, -12, 13, 6);
+    outline();
+    ctx.ellipse(cx, cy, Math.max(rx - 3, 1), Math.max(ry - 3, 1), rot, phi + half, phi - half, true);
     ctx.closePath();
-    ctx.fillStyle = C.mid;
+    ctx.fillStyle = fill;
     ctx.fill();
+
+    ctx.beginPath();
+    outline();
     ctx.lineWidth = 3;
     ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
     ctx.strokeStyle = C.line;
     ctx.stroke();
+
     // Pink inside
+    const iA = lerp(lerp(A, mid, 0.42), tip, 0.1);
+    const iB = lerp(lerp(B, mid, 0.42), tip, 0.1);
+    const iT = lerp(mid, tip, 0.74);
     ctx.beginPath();
-    ctx.moveTo(-7, 3);
-    ctx.quadraticCurveTo(-5, -8, -1, -14);
-    ctx.quadraticCurveTo(0, -15.5, 1, -14);
-    ctx.quadraticCurveTo(5, -8, 7, 3);
-    ctx.closePath();
+    ctx.moveTo(...iA);
+    ctx.quadraticCurveTo(...lerp(iA, iT, 0.5), ...iT);
+    ctx.quadraticCurveTo(...lerp(iB, iT, 0.5), ...iB);
+    ctx.quadraticCurveTo(...mid, ...iA);
     ctx.fillStyle = C.innerEar;
     ctx.fill();
-    ctx.restore();
   }
 
   // Tail from behind the right side: up and swishing when awake, lying flat
@@ -177,24 +220,28 @@
     f.turnB += melted * 0.35; // melted face slides down
     const { turnA, turnB } = f;
 
-    // Behind the body: tail and ears (the body covers their bases)
+    // Behind the body: the tail (the body covers its base)
     drawTail(clamp(melted + (mood === 'sleep' ? 1 : 0), 0, 1));
     sway.target = clamp(-f.wx * 0.08 - lookX.value * 0.35, -0.8, 0.8);
-    const flat = clamp(droop.value + melted, -0.2, 1.2);
-    for (const side of [-1, 1]) {
-      const p = projectOnBody(side * 0.6, -0.95, turnA, turnB);
-      const flick = side === twitchSide ? twitch.value * 0.4 * side : 0;
-      drawEar(p, side * (0.38 + flat * 0.9) + sway.value * 0.4 + flick);
-    }
 
     // Body
+    const rot = f.wx * 0.01;
+    const fill = mochiFill(cx, cy, rx, ry);
     ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, f.wx * 0.01, 0, Math.PI * 2);
-    ctx.fillStyle = mochiFill(cx, cy, rx, ry);
+    ctx.ellipse(cx, cy, rx, ry, rot, 0, Math.PI * 2);
+    ctx.fillStyle = fill;
     ctx.fill();
     ctx.lineWidth = 3;
     ctx.strokeStyle = C.line;
     ctx.stroke();
+
+    // Ears on top of the head, sliding round as it turns. Flat = droopy.
+    const flat = clamp(droop.value + melted, -0.2, 1.2);
+    for (const side of [-1, 1]) {
+      const flick = side === twitchSide ? twitch.value * 0.4 : 0;
+      const phi = -Math.PI / 2 + side * 0.62 + turnA * 0.8;
+      drawEar(fill, rot, phi, side * (-0.12 + flat * 0.9 + flick) + sway.value * 0.4);
+    }
 
     drawStripes(turnA, turnB);
 
@@ -204,7 +251,7 @@
     drawBlush(projectOnBody(0.66, 0.2, turnA, turnB), blush);
     drawWhiskers(projectOnBody(-0.6, 0.14, turnA, turnB), -1);
     drawWhiskers(projectOnBody(0.6, 0.14, turnA, turnB), 1);
-    drawEyes(projectOnBody(-0.4, -0.06, turnA, turnB), projectOnBody(0.4, -0.06, turnA, turnB), f.openness);
+    drawEyes(projectOnBody(-0.4, -0.06, turnA, turnB), projectOnBody(0.4, -0.06, turnA, turnB), f.openness, C.ink);
     drawNose(projectOnBody(0, 0.15, turnA, turnB));
     f.mouth = projectOnBody(0, 0.27, turnA, turnB);
     drawMouth(f.mouth, MOUTH);
@@ -214,7 +261,7 @@
   function drawOver() {
     ctx.beginPath();
     ctx.ellipse(body.cx - body.rx * 0.4, body.cy - body.ry * 0.5, 10, 6 * (body.ry / baseRadius), -0.5, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
     ctx.fill();
   }
 
@@ -244,7 +291,7 @@
   registerPet({
     id: 'cat',
     name: 'Mochi',
-    accent: '#F29BAA',
+    accent: '#7D8FD6',
     springs: [melt, droop, twitch],
     spread: () => ({ x: m() * 0.5, y: m() * 0.58 }),
     draw,
